@@ -1,0 +1,11 @@
+# Ignore virtual environment
+.venv/
+
+# Ignore secret environment variables
+.env
+
+# Ignore Python cache
+__pycache__/
+*.pyc
+
+DataBase.db

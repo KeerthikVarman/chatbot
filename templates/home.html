@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Chat Bot</title>
+
+    <style>
+
+        body{
+            margin:0;
+            background:#f2f2f2;
+            font-family:Arial, Helvetica, sans-serif;
+        }
+
+        .container{
+            width:600px;
+            margin:30px auto;
+        }
+
+        .chat-box{
+            height:500px;
+            background:white;
+            border:1px solid #ccc;
+            border-radius:10px;
+            padding:15px;
+            overflow-y:auto;
+        }
+
+        .right{
+            background:#007bff;
+            color:white;
+            width:fit-content;
+            max-width:70%;
+            padding:10px 15px;
+            margin-left:auto;
+            margin-bottom:10px;
+            border-radius:15px 15px 0px 15px;
+            word-wrap:break-word;
+        }
+
+        .left{
+            background:#e5e5ea;
+            color:black;
+            width:fit-content;
+            max-width:70%;
+            padding:10px 15px;
+            margin-bottom:10px;
+            border-radius:15px 15px 15px 0px;
+            word-wrap:break-word;
+        }
+
+        form{
+            display:flex;
+            margin-top:15px;
+        }
+
+        input{
+            flex:1;
+            padding:12px;
+            font-size:16px;
+            border:1px solid #ccc;
+            border-radius:8px;
+            outline:none;
+        }
+
+        button{
+            margin-left:10px;
+            padding:12px 25px;
+            border:none;
+            border-radius:8px;
+            background:#007bff;
+            color:white;
+            cursor:pointer;
+            font-size:16px;
+        }
+
+        button:hover{
+            background:#0056b3;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="chat-box">
+
+        {% for msg in messages %}
+
+            {% if msg.side == "right" %}
+
+                <div class="right">
+                    {{ msg.text }}
+                </div>
+
+            {% else %}
+
+                <div class="left">
+                    {{ msg.text }}
+                </div>
+
+            {% endif %}
+
+        {% endfor %}
+
+    </div>
+
+    <form action="/chat" method="POST">
+
+        <input
+            type="text"
+            name="chat_in"
+            placeholder="Type your message..."
+            required
+            autocomplete="off">
+
+        <input type="submit" value="submit">
+
+
+
+    </form>
+
+</div>
+
+</body>
+
+</html>
