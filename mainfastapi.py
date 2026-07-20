@@ -33,7 +33,7 @@ search=DuckDuckGoSearchRun()
 
 @tool
 def daatabase()->str:
-    "retrive all the uusername from database"
+    "retrive all the username from database"
     conn=sqlite3.connect("Database.db")
     con=conn.cursor()
     con.execute("SELECT USERNAME FROM AUTHENTICATION")
@@ -64,7 +64,7 @@ def check_user(user:Login):
 
     if data:
         return {"username": user.username}
-    return {"message": "Invalid Credentials"}
+    return {"error": "Invalid Credentials"}
 
 
 @app.post("/chatts")
