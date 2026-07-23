@@ -2,13 +2,16 @@ from fastapi import FastAPI
 import sqlite3
 import os
 from dotenv import load_dotenv
-from pydantic import BaseModel
-
+from pydantic import BaseModel,Field
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.tools import tool
-from langgraph.prebuilt import create_react_agent
+from langchain.agents import create_agent
 from langchain_community.tools import DuckDuckGoSearchRun
-
+from langgraph.checkpoint.memory import MemorySaver
+from langchain.agents.middleware import ModelFallbackMiddleware
+from langchain.agents.middleware import HumanInTheLoopMiddleware
+from langchain.agents.middleware import PIIMiddleware
+#from langchain.memory import ConversationBufferMemory
 load_dotenv()
 
 app = FastAPI()
@@ -20,16 +23,22 @@ class Login(BaseModel):
 
 
 class Chart(BaseModel):
-    user_in: str
-    bot_in: str
+    user_name:str=Field(description="The name of the user")
+    user_in: str=Field(description="The input from the user")
+    bot_in: str=Field(description="The output from the bot")
 
 '''@tool
 def search(query: str) -> str:
     """Search for a query."""
     return f"Searching for {query} on Google"'''
 
-search=DuckDuckGoSearchRun()
 
+memory=MemorySaver()
+@tool
+def search(query: str) -> str:
+    """Search the web using DuckDuckGo for current information."""
+    duck = DuckDuckGoSearchRun()
+    return duck.invoke(query)
 
 @tool
 def daatabase()->str:
@@ -41,15 +50,53 @@ def daatabase()->str:
     con.close()
     return str(a)
 
+@tool
+def delete(username:str)->str:
+    "delete the username from the database"
+    conn=sqlite3.connect("Database.db")
+    con=conn.cursor()
+    con.execute("DELETE FROM AUTHENTICATION WHERE USERNAME=?", (username,))
+    delete=con.rowcount
+    conn.commit()
+    con.close()
+    if delete>0:
+        return f"Deleted {username}"
+    else:
+        return f"No {username} found"
+
+
 llm = ChatGoogleGenerativeAI(
     model="gemini-2.5-flash",
     temperature=0.6,
     google_api_key=os.getenv("GEMINI_API_KEY")
 )
 
-agent = create_react_agent(
+
+
+
+agent = create_agent(
     model=llm,
-    tools=[search,daatabase]
+    tools=[search,daatabase,delete],
+    checkpointer=memory,
+    middleware=[
+        ModelFallbackMiddleware( 
+            "groq:llama-3.1-8b-instant",# Fallback model
+        ),
+        HumanInTheLoopMiddleware(
+            interrupt_on={
+                "delete":{
+                    "allowed_decision":
+                        ["approve", "reject"]
+                }
+            }
+        ),
+        PIIMiddleware(
+            "email",
+            strategy="redact",
+            apply_to_input=True
+            )
+
+    ]
 )
 @app.post("/login")
 def check_user(user:Login):
@@ -78,6 +125,10 @@ def chatt(cha:Chart):
                         "content": cha.user_in
                     }
                 ]
+            },{
+            "configurable":{
+                    "thread_id":cha.user_name
+                }
             }
         )
         print(response)
