@@ -2,16 +2,21 @@ from fastapi import FastAPI
 import sqlite3
 import os
 from dotenv import load_dotenv
-from pydantic import BaseModel,Field
+from pydantic import BaseModel, Field
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.tools import tool
-from langchain.agents import create_agent
 from langchain_community.tools import DuckDuckGoSearchRun
 from langgraph.checkpoint.memory import MemorySaver
 from langchain.agents.middleware import ModelFallbackMiddleware
 from langchain.agents.middleware import HumanInTheLoopMiddleware
 from langchain.agents.middleware import PIIMiddleware
+from langgraph.prebuilt import ToolNode, tools_condition
+from typing import Annotated
+from typing_extensions import TypedDict
+from langgraph.graph.message import add_messages
+from langgraph.graph import StateGraph, START, END
 #from langchain.memory import ConversationBufferMemory
+
 load_dotenv()
 
 app = FastAPI()
@@ -27,6 +32,23 @@ class Chart(BaseModel):
     user_in: str=Field(description="The input from the user")
     bot_in: str=Field(description="The output from the bot")
 
+
+llm = ChatGoogleGenerativeAI(
+    model="gemini-2.5-flash",
+    temperature=0.6,
+    google_api_key=os.getenv("GEMINI_API_KEY")
+)
+
+class State(TypedDict):
+    messages:Annotated[list,add_messages]
+
+graph = StateGraph(State)
+
+def chat(state: State) -> State:
+    return ({"messages":[lllm.invoke(state["messages"])]})
+
+
+
 '''@tool
 def search(query: str) -> str:
     """Search for a query."""
@@ -34,11 +56,15 @@ def search(query: str) -> str:
 
 
 memory=MemorySaver()
+
+
 @tool
 def search(query: str) -> str:
     """Search the web using DuckDuckGo for current information."""
     duck = DuckDuckGoSearchRun()
     return duck.invoke(query)
+
+
 
 @tool
 def daatabase()->str:
@@ -64,40 +90,25 @@ def delete(username:str)->str:
     else:
         return f"No {username} found"
 
+tools=[search,daatabase,delete]
 
-llm = ChatGoogleGenerativeAI(
-    model="gemini-2.5-flash",
-    temperature=0.6,
-    google_api_key=os.getenv("GEMINI_API_KEY")
+lllm=llm.bind_tools(tools)
+
+###graph
+
+graph.add_node("chat", chat)
+graph.add_node("tools", ToolNode(tools))
+graph.add_edge(START, "chat")
+graph.add_conditional_edges(
+    "chat",
+    tools_condition
+)
+graph.add_edge("tools", "chat")
+langgraph = graph.compile(
+    checkpointer=memory
 )
 
 
-
-
-agent = create_agent(
-    model=llm,
-    tools=[search,daatabase,delete],
-    checkpointer=memory,
-    middleware=[
-        ModelFallbackMiddleware( 
-            "groq:llama-3.1-8b-instant",# Fallback model
-        ),
-        HumanInTheLoopMiddleware(
-            interrupt_on={
-                "delete":{
-                    "allowed_decision":
-                        ["approve", "reject"]
-                }
-            }
-        ),
-        PIIMiddleware(
-            "email",
-            strategy="redact",
-            apply_to_input=True
-            )
-
-    ]
-)
 @app.post("/login")
 def check_user(user:Login):
     conn=sqlite3.connect("Database.db")
@@ -117,7 +128,7 @@ def check_user(user:Login):
 @app.post("/chatts")
 def chatt(cha:Chart):
     try:
-        response = agent.invoke(
+        response = langgraph.invoke(
             {
                 "messages": [
                     {
