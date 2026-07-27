@@ -14,12 +14,15 @@ from langgraph.prebuilt import ToolNode, tools_condition
 from typing import Annotated
 from typing_extensions import TypedDict
 from langgraph.graph.message import add_messages
+from langchain_mcp_adapters.client import MultiServerMCPClient
 from langgraph.graph import StateGraph, START, END
 #from langchain.memory import ConversationBufferMemory
 
 load_dotenv()
 
 app = FastAPI()
+
+
 
 
 class Login(BaseModel):
@@ -42,7 +45,7 @@ llm = ChatGoogleGenerativeAI(
 class State(TypedDict):
     messages:Annotated[list,add_messages]
 
-graph = StateGraph(State)
+graph=StateGraph(State)
 
 def chat(state: State) -> State:
     return ({"messages":[lllm.invoke(state["messages"])]})
@@ -89,6 +92,7 @@ def delete(username:str)->str:
         return f"Deleted {username}"
     else:
         return f"No {username} found"
+
 
 tools=[search,daatabase,delete]
 

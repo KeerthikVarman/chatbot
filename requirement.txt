@@ -3,3 +3,5 @@ langsmith
 langchain
 langchain-groq
 langchain_tavily
+langchain-mcp-adapters
+MCP
