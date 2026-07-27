@@ -16,14 +16,14 @@ def login():
 @app.route("/login_accesss", methods=["POST", "GET"])
 def login_access():
     if request.method=="POST":
-        user=request.form["nm"]
+        userr=request.form["nm"]
         password=request.form["pass"]
         captcha=request.form["cap"]
-        response=requests.post("http://127.0.0.1:8000/login",json={"username": user,"password": password})
+        response=requests.post("http://127.0.0.1:8000/login",json={"username": userr,"password": password})
         data=response.json()
-        if captcha==session["token"]:
+        if captcha.lower()==session["token"].lower():
             if "username" in data:
-                session["user"]=data["username"]
+                session["usero"]=data["username"]
                 return redirect(url_for("chat"))
             else:
                 captcha = "".join(random.choices(string.ascii_letters, k=5))
@@ -41,7 +41,7 @@ def chat():
     if request.method=="POST":
         user=request.form["chat_in"]
         response=requests.post("http://127.0.0.1:8000/chatts",
-        json={"user_in": user,"bot_in":""})
+        json={"user_in": user,"bot_in":"","user_name":session.get("usero")})
         print(response.status_code)
         print(response.text)
         data = response.json()
@@ -67,7 +67,13 @@ def chat():
                 }
             )
         session["messages"] = messages
-    return render_template("home.html",messages=session["messages"],user=session.get("user"))
+    return render_template("home.html",messages=session["messages"],user=session.get("usero"))
+
+@app.route("/logout", methods=["POST", "GET"])
+def logout():
+        session.pop("usero", None)
+        session.pop("messages", None)
+        return redirect(url_for("login"))
 
 
 if __name__ == "__main__":

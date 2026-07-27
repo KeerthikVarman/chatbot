@@ -2,16 +2,27 @@ from fastapi import FastAPI
 import sqlite3
 import os
 from dotenv import load_dotenv
-from pydantic import BaseModel
-
+from pydantic import BaseModel, Field
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.tools import tool
-from langgraph.prebuilt import create_react_agent
 from langchain_community.tools import DuckDuckGoSearchRun
+from langgraph.checkpoint.memory import MemorySaver
+from langchain.agents.middleware import ModelFallbackMiddleware
+from langchain.agents.middleware import HumanInTheLoopMiddleware
+from langchain.agents.middleware import PIIMiddleware
+from langgraph.prebuilt import ToolNode, tools_condition
+from typing import Annotated
+from typing_extensions import TypedDict
+from langgraph.graph.message import add_messages
+from langchain_mcp_adapters.client import MultiServerMCPClient
+from langgraph.graph import StateGraph, START, END
+#from langchain.memory import ConversationBufferMemory
 
 load_dotenv()
 
 app = FastAPI()
+
+
 
 
 class Login(BaseModel):
@@ -20,15 +31,42 @@ class Login(BaseModel):
 
 
 class Chart(BaseModel):
-    user_in: str
-    bot_in: str
+    user_name:str=Field(description="The name of the user")
+    user_in: str=Field(description="The input from the user")
+    bot_in: str=Field(description="The output from the bot")
+
+
+llm = ChatGoogleGenerativeAI(
+    model="gemini-2.5-flash",
+    temperature=0.6,
+    google_api_key=os.getenv("GEMINI_API_KEY")
+)
+
+class State(TypedDict):
+    messages:Annotated[list,add_messages]
+
+graph=StateGraph(State)
+
+def chat(state: State) -> State:
+    return ({"messages":[lllm.invoke(state["messages"])]})
+
+
 
 '''@tool
 def search(query: str) -> str:
     """Search for a query."""
     return f"Searching for {query} on Google"'''
 
-search=DuckDuckGoSearchRun()
+
+memory=MemorySaver()
+
+
+@tool
+def search(query: str) -> str:
+    """Search the web using DuckDuckGo for current information."""
+    duck = DuckDuckGoSearchRun()
+    return duck.invoke(query)
+
 
 
 @tool
@@ -41,16 +79,40 @@ def daatabase()->str:
     con.close()
     return str(a)
 
-llm = ChatGoogleGenerativeAI(
-    model="gemini-2.5-flash",
-    temperature=0.6,
-    google_api_key=os.getenv("GEMINI_API_KEY")
+@tool
+def delete(username:str)->str:
+    "delete the username from the database"
+    conn=sqlite3.connect("Database.db")
+    con=conn.cursor()
+    con.execute("DELETE FROM AUTHENTICATION WHERE USERNAME=?", (username,))
+    delete=con.rowcount
+    conn.commit()
+    con.close()
+    if delete>0:
+        return f"Deleted {username}"
+    else:
+        return f"No {username} found"
+
+
+tools=[search,daatabase,delete]
+
+lllm=llm.bind_tools(tools)
+
+###graph
+
+graph.add_node("chat", chat)
+graph.add_node("tools", ToolNode(tools))
+graph.add_edge(START, "chat")
+graph.add_conditional_edges(
+    "chat",
+    tools_condition
+)
+graph.add_edge("tools", "chat")
+langgraph = graph.compile(
+    checkpointer=memory
 )
 
-agent = create_react_agent(
-    model=llm,
-    tools=[search,daatabase]
-)
+
 @app.post("/login")
 def check_user(user:Login):
     conn=sqlite3.connect("Database.db")
@@ -70,7 +132,7 @@ def check_user(user:Login):
 @app.post("/chatts")
 def chatt(cha:Chart):
     try:
-        response = agent.invoke(
+        response = langgraph.invoke(
             {
                 "messages": [
                     {
@@ -78,6 +140,10 @@ def chatt(cha:Chart):
                         "content": cha.user_in
                     }
                 ]
+            },{
+            "configurable":{
+                    "thread_id":cha.user_name
+                }
             }
         )
         print(response)
