@@ -34,6 +34,7 @@ def login_access():
             session["token"] = captcha
             return render_template("login.html",error="Invalid Captcha",captch=captcha)
     return render_template("login.html")
+    
 @app.route("/chat", methods=["POST", "GET"])
 def chat():
     if "messages" not in session:
