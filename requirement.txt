@@ -5,3 +5,15 @@ langchain-groq
 langchain_tavily
 langchain-mcp-adapters
 MCP
+langchain
+langchain-core
+langchain-community
+pypdf
+pymupdf
+sentence_transformers
+faiss-cpu
+chromadb
+numpy
+FastApi
+langchain_google_genai
+Flask

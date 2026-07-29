@@ -14,8 +14,11 @@ from langgraph.prebuilt import ToolNode, tools_condition
 from typing import Annotated
 from typing_extensions import TypedDict
 from langgraph.graph.message import add_messages
-from langchain_mcp_adapters.client import MultiServerMCPClient
 from langgraph.graph import StateGraph, START, END
+from RAG_pipline import RAGRetriever , Embedding , VectorStore
+embedding_model = Embedding()
+vector_store = VectorStore()
+retriever = RAGRetriever(vector_store, embedding_model)
 #from langchain.memory import ConversationBufferMemory
 
 load_dotenv()
@@ -28,6 +31,8 @@ app = FastAPI()
 class Login(BaseModel):
     username: str
     password: str
+
+
 
 
 class Chart(BaseModel):
@@ -60,6 +65,22 @@ def search(query: str) -> str:
 
 memory=MemorySaver()
 
+@tool
+def document(query: str) -> str:
+    """Retrieve information from the documents."""
+
+    results = retriever.retrieve(query)
+
+    response = ""
+
+    for doc in results:
+        response += (
+            f"Source: {doc['metadata'].get('source_file')}\n"
+            f"Page: {doc['metadata'].get('page')}\n"
+            f"Content: {doc['document']}\n\n"
+        )
+
+    return response
 
 @tool
 def search(query: str) -> str:
@@ -94,7 +115,7 @@ def delete(username:str)->str:
         return f"No {username} found"
 
 
-tools=[search,daatabase,delete]
+tools=[search,daatabase,delete,document]
 
 lllm=llm.bind_tools(tools)
 

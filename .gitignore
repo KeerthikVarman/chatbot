@@ -8,4 +8,11 @@
 __pycache__/
 *.pyc
 
+#Ignore the information of the users
 DataBase.db
+
+
+#Ignore the un-structured data 
+data/
+
+
