@@ -67,18 +67,16 @@ memory=MemorySaver()
 
 @tool
 def document(query: str) -> str:
-    """Retrieve information from the documents."""
-
+    """Retrieve information from the documents and answer the query in proper."""
     results = retriever.retrieve(query)
-
     response = ""
-
     for doc in results:
         response += (
             f"Source: {doc['metadata'].get('source_file')}\n"
             f"Page: {doc['metadata'].get('page')}\n"
             f"Content: {doc['document']}\n\n"
         )
+        prompt="use the following answesr to solve the querry"
 
     return response
 
