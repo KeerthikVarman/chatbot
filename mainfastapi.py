@@ -15,6 +15,9 @@ from typing import Annotated
 from typing_extensions import TypedDict
 from langgraph.graph.message import add_messages
 from langgraph.graph import StateGraph, START, END
+
+###local model
+from langchain_ollama import ChatOllama
 from RAG_pipline import RAGRetriever , Embedding , VectorStore
 embedding_model = Embedding()
 vector_store = VectorStore()
@@ -24,7 +27,6 @@ retriever = RAGRetriever(vector_store, embedding_model)
 load_dotenv()
 
 app = FastAPI()
-
 
 
 
@@ -46,6 +48,8 @@ llm = ChatGoogleGenerativeAI(
     temperature=0.6,
     google_api_key=os.getenv("GEMINI_API_KEY")
 )
+
+ollama=ChatOllama(model="hf.co/bartowski/Llama-3.2-3B-Instruct-GGUF")
 
 class State(TypedDict):
     messages:Annotated[list,add_messages]
@@ -115,7 +119,7 @@ def delete(username:str)->str:
 
 tools=[search,daatabase,delete,document]
 
-lllm=llm.bind_tools(tools)
+lllm=ollama.bind_tools(tools)
 
 ###graph
 
