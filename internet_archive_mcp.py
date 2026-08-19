@@ -2,7 +2,7 @@ from mcp.server.fastmcp import FastMCP
 import requests
 import os
 from dotenv import load_dotenv
-
+from tavily import TavilyClient
 load_dotenv()
 
 mcp = FastMCP("Book and Research Search")
@@ -20,6 +20,47 @@ def format_field(value, default="Unknown"):
         return ", ".join(str(item) for item in value)
 
     return str(value)
+
+@mcp.tool()
+def tavily_search(query: str, limit: int = 5) -> str:
+    """
+    Search recent news and live web information using Tavily Search.
+    Returns titles, URLs, and content snippets.
+    """
+    tavily_key = os.getenv("TAVILY_API_KEY")
+    if not tavily_key:
+        return "Error: TAVILY_API_KEY was not found in the .env file."
+
+    try:
+        tavily = TavilyClient(api_key=tavily_key)
+        response = tavily.search(query=query, max_results=limit)
+        results = response.get("results", [])
+
+        if not results:
+            return f"No Tavily search results found for: {query}"
+
+        formatted_results = []
+        for result in results:
+            title = format_field(result.get("title"), "No Title")
+            url = format_field(result.get("url"), "No URL")
+            content = format_field(result.get("content"), "No Content")
+
+            if len(content) > 500:
+                content = content[:500] + "..."
+
+            formatted_results.append(
+                f"Source: Tavily Search\n"
+                f"Title: {title}\n"
+                f"URL: {url}\n"
+                f"Content: {content}"
+            )
+
+        return "\n\n".join(formatted_results)
+
+    except Exception as e:
+        return f"Tavily search error: {e}"
+
+
 
 @mcp.tool()
 def search_books(query: str, limit: int = 5) -> str:

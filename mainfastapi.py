@@ -20,6 +20,7 @@ from langchain_mcp_adapters.client import MultiServerMCPClient
 from RAG_pipline import RAGRetriever, Embedding, VectorStore
 
 load_dotenv()
+duck = DuckDuckGoSearchRun()
 
 embedding_model = Embedding()
 vector_store = VectorStore()
@@ -38,7 +39,7 @@ class State(TypedDict):
     messages: Annotated[list[AnyMessage], add_messages]
 
 llm = ChatGroq(
-    model="llama-3.3-70b-versatile",
+    model="openai/gpt-oss-120b",
     api_key=os.getenv("GROQ_API_KEY"),
     temperature=0
 )
@@ -72,12 +73,11 @@ def document(query: str) -> str:
 
 @tool
 def search(query: str) -> str:
+    """Search the internet for current or recent information.
+
+    Use this tool when the user asks for current, recent,
+    online, or live web information.
     """
-    Search the internet using DuckDuckGo.
-    Use this only when current, online, or web information is required.
-    Do not use this tool for greetings or simple casual conversation.
-    """
-    duck = DuckDuckGoSearchRun()
     return duck.invoke(query)
 
 @tool
@@ -128,12 +128,12 @@ You are a helpful AI assistant.
 
 Follow these rules:
 1. For greetings and casual conversation, answer directly.
-2. Do not use the web search tool for greetings or casual messages.
+2. Do not use web search tools for greetings or casual messages.
 3. Use the document tool when the user asks about information in the uploaded documents.
-4. Use the web search tool only when current or online information is required.
+4. Use web search tools (such as Tavily search or DuckDuckGo) when current, recent news, or live web information is required.
 5. Use database tools only when the user asks about database information.
 6. Use delete only when the user explicitly asks to delete a username.
-7. Use Internet Archive tools when the user asks to search for books or Internet Archive content.
+7. Use book or Internet Archive tools when the user asks to search for books, research papers, or Internet Archive content.
 8. If no tool is required, answer directly.
 """
     )
