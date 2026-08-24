@@ -1,1539 +1,331 @@
 import os
 import hashlib
-import chromadb
 import warnings
-warnings.filterwarnings("ignore")
-
+import chromadb
 from pathlib import Path
-
 from dotenv import load_dotenv
 from tavily import TavilyClient
 
-from langchain_community.document_loaders import (
-    PyMuPDFLoader,
-    TextLoader
-)
+warnings.filterwarnings("ignore")
 
-from langchain_text_splitters import (
-    RecursiveCharacterTextSplitter
-)
-
+from langchain_community.document_loaders import PyMuPDFLoader, TextLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from sentence_transformers import SentenceTransformer
-
 from langchain_core.tools import tool
-
-from langchain_google_genai import (
-    ChatGoogleGenerativeAI
-)
-
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.agents import create_agent
-
-
-# ============================================================
-# 1. LOAD ENVIRONMENT VARIABLES
-# ============================================================
 
 load_dotenv()
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
 
-
 if not GEMINI_API_KEY:
-    raise ValueError(
-        "GEMINI_API_KEY is missing from .env"
-    )
+    raise ValueError("GEMINI_API_KEY is missing from .env")
 
 if not TAVILY_API_KEY:
-    raise ValueError(
-        "TAVILY_API_KEY is missing from .env"
-    )
+    raise ValueError("TAVILY_API_KEY is missing from .env")
 
-
-# ============================================================
-# 2. YOUR ACTUAL DATA PATHS
-# ============================================================
-
-RESUME_PATH = (
-    r"C:\Users\keert\OneDrive\Desktop\AI\data\pdf"
-)
-
-COMPANY_PATH = (
-    r"C:\Users\keert\OneDrive\Desktop\AI\data\text"
-)
-
-
-# Chroma database paths
-
-RESUME_CHROMA_PATH = (
-    r"C:\Users\keert\OneDrive\Desktop\AI\data\chroma_db\resume"
-)
-
-COMPANY_CHROMA_PATH = (
-    r"C:\Users\keert\OneDrive\Desktop\AI\data\chroma_db\company"
-)
-
-
-# ============================================================
-# 3. CHECK DATA PATHS
-# ============================================================
-
-print("\n" + "=" * 70)
-print("CHECKING DATA PATHS")
-print("=" * 70)
-
-
-print("\nResume path:")
-print(RESUME_PATH)
-print(
-    "Exists:",
-    Path(RESUME_PATH).exists()
-)
-
-
-print("\nCompany path:")
-print(COMPANY_PATH)
-print(
-    "Exists:",
-    Path(COMPANY_PATH).exists()
-)
-
+RESUME_PATH = r"C:\Users\keert\OneDrive\Desktop\AI\data\pdf"
+COMPANY_PATH = r"C:\Users\keert\OneDrive\Desktop\AI\data\text"
+RESUME_CHROMA_PATH = r"C:\Users\keert\OneDrive\Desktop\AI\data\chroma_db\resume"
+COMPANY_CHROMA_PATH = r"C:\Users\keert\OneDrive\Desktop\AI\data\chroma_db\company"
 
 if not Path(RESUME_PATH).exists():
-
-    raise FileNotFoundError(
-        f"\nResume folder does not exist:\n"
-        f"{RESUME_PATH}"
-    )
-
+    raise FileNotFoundError(f"Resume folder does not exist: {RESUME_PATH}")
 
 if not Path(COMPANY_PATH).exists():
-
-    raise FileNotFoundError(
-        f"\nCompany folder does not exist:\n"
-        f"{COMPANY_PATH}"
-    )
-
-
-# ============================================================
-# 4. LOAD ALL PDF FILES
-# ============================================================
+    raise FileNotFoundError(f"Company folder does not exist: {COMPANY_PATH}")
 
 def load_pdfs(pdf_path):
-
     all_documents = []
-
     path = Path(pdf_path)
-
-    pdf_files = list(
-        path.glob("**/*.pdf")
-    )
-
-
-    print("\n" + "=" * 70)
-    print("LOADING RESUME PDF FILES")
-    print("=" * 70)
-
-
-    print(
-        f"Searching in:\n{path}"
-    )
-
-
-    print(
-        f"Found {len(pdf_files)} PDF file(s)"
-    )
-
+    pdf_files = list(path.glob("**/*.pdf"))
 
     if not pdf_files:
-
-        print(
-            "WARNING: No PDF files found."
-        )
-
         return []
-
 
     for pdf_file in pdf_files:
-
         try:
-
-            print(
-                f"\nLoading: {pdf_file.name}"
-            )
-
-
-            loader = PyMuPDFLoader(
-                str(pdf_file)
-            )
-
-
+            loader = PyMuPDFLoader(str(pdf_file))
             documents = loader.load()
-
-
             for doc in documents:
-
-                doc.metadata[
-                    "source_file"
-                ] = pdf_file.name
-
-
-                doc.metadata[
-                    "file_type"
-                ] = "pdf"
-
-
-                doc.metadata[
-                    "source_type"
-                ] = "resume"
-
-
-            all_documents.extend(
-                documents
-            )
-
-
-            print(
-                f"Pages loaded: "
-                f"{len(documents)}"
-            )
-
-
+                doc.metadata["source_file"] = pdf_file.name
+                doc.metadata["file_type"] = "pdf"
+                doc.metadata["source_type"] = "resume"
+            all_documents.extend(documents)
         except Exception as e:
-
-            print(
-                f"Error loading "
-                f"{pdf_file.name}: {e}"
-            )
-
-
-    print(
-        f"\nTotal resume pages loaded: "
-        f"{len(all_documents)}"
-    )
-
+            print(f"Error loading {pdf_file.name}: {e}")
 
     return all_documents
-
-
-# ============================================================
-# 5. LOAD ALL TXT FILES
-# ============================================================
 
 def load_txt(txt_path):
-
     all_documents = []
-
     path = Path(txt_path)
-
-    text_files = list(
-        path.glob("**/*.txt")
-    )
-
-
-    print("\n" + "=" * 70)
-    print("LOADING COMPANY TXT FILES")
-    print("=" * 70)
-
-
-    print(
-        f"Searching in:\n{path}"
-    )
-
-
-    print(
-        f"Found {len(text_files)} TXT file(s)"
-    )
-
+    text_files = list(path.glob("**/*.txt"))
 
     if not text_files:
-
-        print(
-            "WARNING: No TXT files found."
-        )
-
         return []
 
-
     for text_file in text_files:
-
         try:
-
-            print(
-                f"\nLoading: {text_file.name}"
-            )
-
-
-            loader = TextLoader(
-                str(text_file),
-                encoding="utf-8"
-            )
-
-
+            loader = TextLoader(str(text_file), encoding="utf-8")
             documents = loader.load()
-
-
             for doc in documents:
-
-                doc.metadata[
-                    "source_file"
-                ] = text_file.name
-
-
-                doc.metadata[
-                    "file_type"
-                ] = "txt"
-
-
-                doc.metadata[
-                    "source_type"
-                ] = "company"
-
-
-            all_documents.extend(
-                documents
-            )
-
-
-            print(
-                f"Documents loaded: "
-                f"{len(documents)}"
-            )
-
-
+                doc.metadata["source_file"] = text_file.name
+                doc.metadata["file_type"] = "txt"
+                doc.metadata["source_type"] = "company"
+            all_documents.extend(documents)
         except Exception as e:
-
-            print(
-                f"Error loading "
-                f"{text_file.name}: {e}"
-            )
-
-
-    print(
-        f"\nTotal company documents loaded: "
-        f"{len(all_documents)}"
-    )
-
+            print(f"Error loading {text_file.name}: {e}")
 
     return all_documents
 
-
-# ============================================================
-# 6. SPLIT DOCUMENTS INTO CHUNKS
-# ============================================================
-
-def split_documents(
-    documents,
-    chunk_size=1000,
-    chunk_overlap=200
-):
-
+def split_documents(documents, chunk_size=1000, chunk_overlap=200):
     if not documents:
-
-        print(
-            "No documents available "
-            "for chunking."
-        )
-
         return []
 
-
     splitter = RecursiveCharacterTextSplitter(
-
         chunk_size=chunk_size,
-
         chunk_overlap=chunk_overlap,
-
-        separators=[
-            "\n\n",
-            "\n",
-            " ",
-            ""
-        ]
-
+        separators=["\n\n", "\n", " ", ""]
     )
-
-
-    chunks = splitter.split_documents(
-        documents
-    )
-
-
-    print(
-        f"Created {len(chunks)} chunks"
-    )
-
-
-    return chunks
-
-
-# ============================================================
-# 7. EMBEDDING MODEL
-# ============================================================
+    return splitter.split_documents(documents)
 
 class Embedding:
+    def __init__(self, model_name="all-MiniLM-L6-v2"):
+        self.model = SentenceTransformer(model_name)
 
-    def __init__(
-        self,
-        model_name="all-MiniLM-L6-v2"
-    ):
-
-        print("\n" + "=" * 70)
-        print("LOADING EMBEDDING MODEL")
-        print("=" * 70)
-
-
-        print(
-            f"Model: {model_name}"
-        )
-
-
-        self.model = SentenceTransformer(
-            model_name
-        )
-
-
-        print(
-            "Embedding dimension:",
-            self.model
-            .get_sentence_embedding_dimension()
-        )
-
-
-    def generate_embedding(
-        self,
-        texts
-    ):
-
+    def generate_embedding(self, texts):
         if not texts:
-
             return []
-
-
-        print(
-            f"Generating embeddings for "
-            f"{len(texts)} texts"
-        )
-
-
-        embeddings = self.model.encode(
-
-            texts,
-
-            show_progress_bar=True
-
-        )
-
-
-        print(
-            f"Embedding shape: "
-            f"{embeddings.shape}"
-        )
-
-
-        return embeddings
-
-
-# ============================================================
-# 8. CHROMA VECTOR STORE
-# ============================================================
+        return self.model.encode(texts, show_progress_bar=False)
 
 class VectorStore:
+    def __init__(self, collection_name, persist_directory):
+        os.makedirs(persist_directory, exist_ok=True)
+        self.client = chromadb.PersistentClient(path=persist_directory)
+        self.collection = self.client.get_or_create_collection(name=collection_name)
 
-    def __init__(
-        self,
-        collection_name,
-        persist_directory
-    ):
-
-        os.makedirs(
-            persist_directory,
-            exist_ok=True
-        )
-
-
-        self.client = (
-            chromadb.PersistentClient(
-                path=persist_directory
-            )
-        )
-
-
-        self.collection = (
-            self.client
-            .get_or_create_collection(
-
-                name=collection_name
-
-            )
-        )
-
-
-        print(
-            f"\nCollection: "
-            f"{collection_name}"
-        )
-
-
-        print(
-            f"Existing chunks: "
-            f"{self.collection.count()}"
-        )
-
-
-    def add_documents(
-        self,
-        documents,
-        embeddings
-    ):
-
-        if not documents:
-
-            print(
-                "No documents to store."
-            )
-
+    def add_documents(self, documents, embeddings):
+        if not documents or len(embeddings) == 0:
             return
 
+        ids, texts, metadatas, embedding_list = [], [], [], []
+        for i, (doc, embedding) in enumerate(zip(documents, embeddings)):
+            source = doc.metadata.get("source_file", "unknown")
+            page = doc.metadata.get("page", 0)
+            doc_id = hashlib.md5(f"{source}_{page}_{i}".encode()).hexdigest()
 
-        if len(embeddings) == 0:
-
-            print(
-                "No embeddings to store."
-            )
-
-            return
-
-
-        ids = []
-
-        texts = []
-
-        metadatas = []
-
-        embedding_list = []
-
-
-        for i, (
-            doc,
-            embedding
-        ) in enumerate(
-            zip(
-                documents,
-                embeddings
-            )
-        ):
-
-            source = doc.metadata.get(
-                "source_file",
-                "unknown"
-            )
-
-
-            page = doc.metadata.get(
-                "page",
-                0
-            )
-
-
-            doc_id = hashlib.md5(
-
-                f"{source}_{page}_{i}".encode()
-
-            ).hexdigest()
-
-
-            ids.append(
-                doc_id
-            )
-
-
-            texts.append(
-                doc.page_content
-            )
-
-
-            metadatas.append(
-                dict(doc.metadata)
-            )
-
-
-            embedding_list.append(
-                embedding.tolist()
-            )
-
+            ids.append(doc_id)
+            texts.append(doc.page_content)
+            metadatas.append(dict(doc.metadata))
+            embedding_list.append(embedding.tolist())
 
         self.collection.upsert(
-
             ids=ids,
-
             documents=texts,
-
             metadatas=metadatas,
-
             embeddings=embedding_list
-
         )
-
-
-        print(
-            f"Stored {len(ids)} chunks"
-        )
-
-
-        print(
-            f"Total chunks in database: "
-            f"{self.collection.count()}"
-        )
-
-
-# ============================================================
-# 9. RAG RETRIEVER
-# ============================================================
 
 class RAGRetriever:
+    def __init__(self, vector_store, embedding_manager):
+        self.vector_store = vector_store
+        self.embedding_manager = embedding_manager
 
-    def __init__(
-        self,
-        vector_store,
-        embedding_manager
-    ):
-
-        self.vector_store = (
-            vector_store
-        )
-
-        self.embedding_manager = (
-            embedding_manager
-        )
-
-
-    def retrieve(
-        self,
-        query,
-        top_k=5
-    ):
-
-        print(
-            f"\nRetrieving for: {query}"
-        )
-
-
-        # Check if database is empty
-
-        if (
-            self.vector_store
-            .collection
-            .count()
-            == 0
-        ):
-
-            print(
-                "Database is empty."
-            )
-
+    def retrieve(self, query, top_k=5):
+        if self.vector_store.collection.count() == 0:
             return []
 
-
-        # Generate query embedding
-
-        query_embedding = (
-
-            self.embedding_manager
-            .generate_embedding(
-                [query]
-            )[0]
-
-        )
-
+        query_embedding = self.embedding_manager.generate_embedding([query])[0]
 
         try:
-
-            results = (
-
-                self.vector_store
-                .collection
-                .query(
-
-                    query_embeddings=[
-                        query_embedding.tolist()
-                    ],
-
-                    n_results=top_k
-
-                )
-
+            results = self.vector_store.collection.query(
+                query_embeddings=[query_embedding.tolist()],
+                n_results=top_k
             )
 
-
-            documents = (
-                results["documents"][0]
-            )
-
-            metadatas = (
-                results["metadatas"][0]
-            )
-
-            distances = (
-                results["distances"][0]
-            )
-
-            ids = (
-                results["ids"][0]
-            )
-
+            documents = results["documents"][0]
+            metadatas = results["metadatas"][0]
+            distances = results["distances"][0]
+            ids = results["ids"][0]
 
             retrieved_docs = []
-
-
-            for i, (
-                doc_id,
-                document,
-                metadata,
-                distance
-            ) in enumerate(
-
-                zip(
-                    ids,
-                    documents,
-                    metadatas,
-                    distances
-                )
-
-            ):
-
+            for i, (doc_id, document, metadata, distance) in enumerate(zip(ids, documents, metadatas, distances)):
                 retrieved_docs.append({
-
                     "id": doc_id,
-
                     "document": document,
-
                     "metadata": metadata,
-
                     "distance": distance,
-
                     "rank": i + 1
-
                 })
-
-
-            print(
-                f"Retrieved "
-                f"{len(retrieved_docs)} chunks"
-            )
-
-
             return retrieved_docs
-
-
         except Exception as e:
-
-            print(
-                f"Retrieval error: {e}"
-            )
-
+            print(f"Retrieval error: {e}")
             return []
-
-
-# ============================================================
-# 10. CREATE EMBEDDING MODEL
-# ============================================================
 
 embedding_model = Embedding()
 
-
-# ============================================================
-# 11. RESUME DATABASE
-# ============================================================
-
-print("\n")
-print("=" * 70)
-print("CREATING RESUME CHROMA DATABASE")
-print("=" * 70)
-
-
-resume_documents = load_pdfs(
-    RESUME_PATH
-)
-
-
-resume_chunks = split_documents(
-    resume_documents
-)
-
-
-if resume_chunks:
-
-    resume_texts = [
-
-        doc.page_content
-
-        for doc in resume_chunks
-
-    ]
-
-
-    resume_embeddings = (
-
-        embedding_model
-        .generate_embedding(
-            resume_texts
-        )
-
-    )
-
-else:
-
-    resume_embeddings = []
-
+resume_documents = load_pdfs(RESUME_PATH)
+resume_chunks = split_documents(resume_documents)
+resume_embeddings = embedding_model.generate_embedding([doc.page_content for doc in resume_chunks]) if resume_chunks else []
 
 resume_vector_store = VectorStore(
-
-    collection_name=
-    "resume_documents",
-
-    persist_directory=
-    RESUME_CHROMA_PATH
-
+    collection_name="resume_documents",
+    persist_directory=RESUME_CHROMA_PATH
 )
+resume_vector_store.add_documents(resume_chunks, resume_embeddings)
+resume_retriever = RAGRetriever(resume_vector_store, embedding_model)
 
-
-resume_vector_store.add_documents(
-
-    resume_chunks,
-
-    resume_embeddings
-
-)
-
-
-resume_retriever = RAGRetriever(
-
-    resume_vector_store,
-
-    embedding_model
-
-)
-
-
-# ============================================================
-# 12. COMPANY DATABASE
-# ============================================================
-
-print("\n")
-print("=" * 70)
-print("CREATING COMPANY CHROMA DATABASE")
-print("=" * 70)
-
-
-company_documents = load_txt(
-    COMPANY_PATH
-)
-
-
-company_chunks = split_documents(
-    company_documents
-)
-
-
-if company_chunks:
-
-    company_texts = [
-
-        doc.page_content
-
-        for doc in company_chunks
-
-    ]
-
-
-    company_embeddings = (
-
-        embedding_model
-        .generate_embedding(
-            company_texts
-        )
-
-    )
-
-else:
-
-    company_embeddings = []
-
+company_documents = load_txt(COMPANY_PATH)
+company_chunks = split_documents(company_documents)
+company_embeddings = embedding_model.generate_embedding([doc.page_content for doc in company_chunks]) if company_chunks else []
 
 company_vector_store = VectorStore(
-
-    collection_name=
-    "company_documents",
-
-    persist_directory=
-    COMPANY_CHROMA_PATH
-
+    collection_name="company_documents",
+    persist_directory=COMPANY_CHROMA_PATH
 )
+company_vector_store.add_documents(company_chunks, company_embeddings)
+company_retriever = RAGRetriever(company_vector_store, embedding_model)
 
-
-company_vector_store.add_documents(
-
-    company_chunks,
-
-    company_embeddings
-
-)
-
-
-company_retriever = RAGRetriever(
-
-    company_vector_store,
-
-    embedding_model
-
-)
-
-
-# ============================================================
-# 13. DATABASE STATUS
-# ============================================================
-
-print("\n")
-print("=" * 70)
-print("DATABASE STATUS")
-print("=" * 70)
-
-
-print(
-    "Resume Chroma chunks:",
-    resume_vector_store
-    .collection
-    .count()
-)
-
-
-print(
-    "Company Chroma chunks:",
-    company_vector_store
-    .collection
-    .count()
-)
-
-
-# ============================================================
-# 14. FORMAT RAG RESULTS
-# ============================================================
-
-def format_results(
-    results,
-    database_name
-):
-
+def format_results(results, database_name):
     if not results:
-
-        return (
-            f"No relevant information "
-            f"was found in the "
-            f"{database_name} database."
-        )
-
+        return f"No relevant information was found in the {database_name} database."
 
     output = []
-
-
     for result in results:
-
-        metadata = result[
-            "metadata"
-        ]
-
-
-        source = metadata.get(
-            "source_file",
-            "unknown"
-        )
-
-
-        page = metadata.get(
-            "page",
-            "N/A"
-        )
-
-
-        distance = result.get(
-            "distance",
-            "N/A"
-        )
-
-
-        content = result[
-            "document"
-        ]
-
+        metadata = result["metadata"]
+        source = metadata.get("source_file", "unknown")
+        page = metadata.get("page", "N/A")
+        distance = result.get("distance", "N/A")
+        content = result["document"]
 
         output.append(
-
             f"DATABASE: {database_name}\n"
             f"SOURCE: {source}\n"
             f"PAGE: {page}\n"
             f"DISTANCE: {distance}\n"
             f"CONTENT:\n{content}"
-
         )
-
-
-    return "\n\n".join(
-        output
-    )
-
-
-# ============================================================
-# 15. RESUME SEARCH TOOL
-# ============================================================
+    return "\n\n".join(output)
 
 @tool
-def search_resume(
-    query: str
-) -> str:
-
+def search_resume(query: str) -> str:
     """
     Search the user's Resume Chroma database.
-
-    Use this for:
-    education, skills, projects,
-    experience, internships,
-    certifications, achievements,
-    programming languages and other
-    resume information.
+    Use for: education, skills, projects, experience, internships, certifications, achievements, languages.
     """
-
-
-    print(
-        "\n[AGENT] Searching Resume Chroma DB..."
-    )
-
-
-    results = resume_retriever.retrieve(
-
-        query,
-
-        top_k=5
-
-    )
-
-
-    return format_results(
-
-        results,
-
-        "RESUME"
-
-    )
-
-
-# ============================================================
-# 16. COMPANY SEARCH TOOL
-# ============================================================
+    print("\n[AGENT] Searching Resume Chroma DB...")
+    results = resume_retriever.retrieve(query, top_k=5)
+    return format_results(results, "RESUME")
 
 @tool
-def search_company(
-    query: str
-) -> str:
-
+def search_company(query: str) -> str:
     """
     Search the Company Chroma database.
-
-    Use this for:
-    company details, job descriptions,
-    job requirements, responsibilities,
-    required skills, technologies,
-    qualifications and eligibility.
+    Use for: company details, job descriptions, requirements, responsibilities, required skills, eligibility.
     """
+    print("\n[AGENT] Searching Company Chroma DB...")
+    results = company_retriever.retrieve(query, top_k=5)
+    return format_results(results, "COMPANY")
 
-
-    print(
-        "\n[AGENT] Searching Company Chroma DB..."
-    )
-
-
-    results = company_retriever.retrieve(
-
-        query,
-
-        top_k=5
-
-    )
-
-
-    return format_results(
-
-        results,
-
-        "COMPANY"
-
-    )
-
-
-# ============================================================
-# 17. TAVILY WEB SEARCH
-# ============================================================
-
-tavily_client = TavilyClient(
-    api_key=TAVILY_API_KEY
-)
-
+tavily_client = TavilyClient(api_key=TAVILY_API_KEY)
 
 @tool
-def search_web(
-    query: str
-) -> str:
-
+def search_web(query: str) -> str:
     """
-    Search the internet using Tavily.
-
-    Use this when:
-    - local databases do not contain enough information
-    - current information is required
-    - recent information is required
-    - latest information is required
-    - external company information is required
-    - current technology information is required
+    Search the internet using Tavily for current, external, or missing information.
     """
-
-
-    print(
-        "\n[AGENT] Searching Tavily..."
-    )
-
-
+    print("\n[AGENT] Searching Tavily...")
     try:
-
-        response = tavily_client.search(
-
-            query=query,
-
-            max_results=5
-
-        )
-
-
+        response = tavily_client.search(query=query, max_results=5)
         results = []
-
-
-        for result in response.get(
-            "results",
-            []
-        ):
-
+        for result in response.get("results", []):
             results.append(
-
-                f"TITLE: "
-                f"{result.get('title', '')}\n"
-
-                f"URL: "
-                f"{result.get('url', '')}\n"
-
-                f"CONTENT:\n"
-                f"{result.get('content', '')}"
-
+                f"TITLE: {result.get('title', '')}\n"
+                f"URL: {result.get('url', '')}\n"
+                f"CONTENT:\n{result.get('content', '')}"
             )
-
-
         if not results:
-
-            return (
-                "No relevant web information found."
-            )
-
-
-        return "\n\n".join(
-            results
-        )
-
-
+            return "No relevant web information found."
+        return "\n\n".join(results)
     except Exception as e:
-
-        return (
-            f"Tavily search error: {e}"
-        )
-
-
-# ============================================================
-# 18. GEMINI LLM
-# ============================================================
+        return f"Tavily search error: {e}"
 
 llm = ChatGoogleGenerativeAI(
-
     model="gemini-2.5-flash",
-
     google_api_key=GEMINI_API_KEY,
-
     temperature=0
-
 )
 
-
-# ============================================================
-# 19. AGENT SYSTEM PROMPT
-# ============================================================
-
 SYSTEM_PROMPT = """
-
 You are an Agentic RAG assistant.
 
 You answer questions using three sources:
+1. Resume Chroma database (tool: search_resume)
+2. Company Chroma database (tool: search_company)
+3. Tavily web search (tool: search_web)
 
-1. Resume Chroma database
-2. Company Chroma database
-3. Tavily web search
-
-
-------------------------------------------------------------
-RESUME DATABASE
-------------------------------------------------------------
-
-Tool: search_resume
-
-The Resume database contains information
-extracted from the user's resume PDF.
-
-It may contain:
-
-- Name
-- Education
-- Degree
-- Skills
-- Programming languages
-- Machine learning skills
-- AI skills
-- Projects
-- Project technologies
-- Work experience
-- Internships
-- Certifications
-- Achievements
-- Other resume information
-
-
-------------------------------------------------------------
-COMPANY DATABASE
-------------------------------------------------------------
-
-Tool: search_company
-
-The Company database contains information
-extracted from TXT files.
-
-It may contain:
-
-- Company details
-- Company description
-- Job descriptions
-- Job requirements
-- Required skills
-- Preferred skills
-- Responsibilities
-- Technologies
-- Qualifications
-- Eligibility
-- Experience requirements
-
-
-------------------------------------------------------------
-WEB SEARCH
-------------------------------------------------------------
-
-Tool: search_web
-
-Tavily searches the internet.
-
-Use Tavily when:
-
-- Local databases do not contain enough information.
-- Current information is required.
-- Recent information is required.
-- Latest information is required.
-- External company information is required.
-- Current technology information is required.
-
-Do not use Tavily unnecessarily when the local
-database already contains the answer.
-
-
-------------------------------------------------------------
-AGENT BEHAVIOR
-------------------------------------------------------------
-
+AGENT BEHAVIOR:
 1. Understand the user's question first.
-
-2. Select the appropriate source.
-
-3. You may use multiple sources.
-
-4. For questions about the user's resume,
-   use search_resume.
-
-5. For questions about the company,
-   use search_company.
-
-6. For questions comparing the user's resume
-   with company requirements, use BOTH:
-
-   search_resume
-   search_company
-
-7. After retrieving information, evaluate
-   whether the information is sufficient.
-
-8. If local information is insufficient,
-   use search_web when appropriate.
-
-9. For current information, use search_web.
-
-10. Never invent information.
-
-11. Only use information returned by the
-    available tools.
-
-12. If sufficient information cannot be found,
-    clearly tell the user.
-
-13. When comparing the resume with company
-    requirements, identify:
-
-    - Matching skills
-    - Missing skills
-    - Matching technologies
-    - Relevant projects
-    - Relevant experience
-    - Education match
-    - Eligibility match
-    - Areas for improvement
-
-14. Give the final answer in normal,
-    human-readable language.
-
-15. Do not return Python lists,
-    dictionaries, JSON or internal tool
-    structures to the user.
-
-16. Do not expose internal tool signatures,
-    metadata or system information.
-
-17. Keep the final response clear and easy
-    for a human to understand.
+2. Select the appropriate source (may use multiple sources).
+3. For resume questions -> search_resume.
+4. For company questions -> search_company.
+5. For matching/comparing resume with company -> use BOTH search_resume AND search_company.
+6. Evaluate whether retrieved information is sufficient.
+7. If local information is insufficient, use search_web.
+8. Never invent information.
+9. When comparing resume with company requirements, identify:
+   - Matching skills, Missing skills, Matching technologies
+   - Relevant projects, Relevant experience, Education match, Areas for improvement
+10. Give the final answer in normal, human-readable language.
+11. Do not return Python lists, dictionaries, JSON, or tool structures to the user.
 """
 
-
-# ============================================================
-# 20. CREATE AGENT
-# ============================================================
-
-tools = [
-
-    search_resume,
-
-    search_company,
-
-    search_web
-
-]
-
+tools = [search_resume, search_company, search_web]
 
 agent = create_agent(
-
     model=llm,
-
     tools=tools,
-
     system_prompt=SYSTEM_PROMPT
-
 )
 
-
-# ============================================================
-# 21. HUMAN-READABLE RESPONSE FUNCTION
-# ============================================================
-
-def get_human_readable_response(
-    response
-):
-
-    content = response[
-        "messages"
-    ][-1].content
-
-
-    # Gemini sometimes returns:
-    #
-    # [
-    #     {
-    #         "type": "text",
-    #         "text": "..."
-    #     }
-    # ]
-
-
-    if isinstance(
-        content,
-        list
-    ):
-
+def get_human_readable_response(response):
+    content = response["messages"][-1].content
+    if isinstance(content, list):
         text_parts = []
-
-
         for item in content:
-
-            if isinstance(
-                item,
-                dict
-            ):
-
-                if item.get(
-                    "type"
-                ) == "text":
-
-                    text = item.get(
-                        "text",
-                        ""
-                    )
-
+            if isinstance(item, dict):
+                if item.get("type") == "text":
+                    text = item.get("text", "")
                     if text:
+                        text_parts.append(text)
+            elif isinstance(item, str):
+                text_parts.append(item)
+        return "\n".join(text_parts).strip()
 
-                        text_parts.append(
-                            text
-                        )
+    return str(content).strip()
 
-
-            elif isinstance(
-                item,
-                str
-            ):
-
-                text_parts.append(
-                    item
-                )
-
-
-        return "\n".join(
-            text_parts
-        ).strip()
-
-
-    # Normal string response
-
-    return str(
-        content
-    ).strip()
-
-
-# ============================================================
-# 22. AGENTIC RAG STATUS
-# ============================================================
-
-print("\n")
-print("=" * 70)
-print("                 AGENTIC RAG READY")
-print("=" * 70)
-
-
-print(
-    f"""
-Resume Chroma chunks:
-{resume_vector_store.collection.count()}
-
-Company Chroma chunks:
-{company_vector_store.collection.count()}
-
-Tavily:
-Enabled
-
-Gemini:
-Enabled
-
-Available tools:
-- search_resume
-- search_company
-- search_web
-"""
-)
-
-
-# ============================================================
-# 23. CHAT LOOP
-# ============================================================
+print("\nAGENTIC RAG READY")
+print(f"Resume Chroma chunks: {resume_vector_store.collection.count()}")
+print(f"Company Chroma chunks: {company_vector_store.collection.count()}")
 
 while True:
+    question = input("\nYou: ")
 
-    question = input(
-        "\nYou: "
-    )
-
-
-    if question.lower().strip() in [
-
-        "exit",
-
-        "quit"
-
-    ]:
-
-        print(
-            "\nGoodbye!"
-        )
-
+    if question.lower().strip() in ["exit", "quit"]:
+        print("\nGoodbye!")
         break
 
-
     if not question.strip():
-
         continue
 
-
     try:
-
-        response = agent.invoke(
-
-            {
-
-                "messages": [
-
-                    {
-
-                        "role": "user",
-
-                        "content": question
-
-                    }
-
-                ]
-
-            }
-
-        )
-
-
-        # Convert Gemini structured output
-        # into normal human-readable text
-
-        answer = (
-            get_human_readable_response(
-                response
-            )
-        )
-
-
-        print(
-            "\nAgent:"
-        )
-
-        print(
-            answer
-        )
-
-
+        response = agent.invoke({"messages": [{"role": "user", "content": question}]})
+        answer = get_human_readable_response(response)
+        print("\nAgent:")
+        print(answer)
     except Exception as e:
-
-        print(
-            "\nAgent error:"
-        )
-
-        print(
-            str(e)
-        )
+        print("\nAgent error:")
+        print(str(e))
