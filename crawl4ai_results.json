@@ -1,0 +1,169 @@
+{
+    "goal": "AI ML Engineer and Python Developer jobs in Bangalore 0-1 years experience",
+    "total_pages": 10,
+    "successful_pages": 6,
+    "failed_pages": 4,
+    "success_rate": 60.0,
+    "total_time": 54.388,
+    "average_time": 5.439,
+    "results": [
+        {
+            "url": "https://cybotrix.com/jobs/ai-ml-engineer-jobs-in-bangalore.html",
+            "success": true,
+            "execution_time": 27.311,
+            "content_length": 30861,
+            "extracted_data": [
+                {
+                    "index": 0,
+                    "error": true,
+                    "tags": [
+                        "error"
+                    ],
+                    "content": "litellm.NotFoundError: GeminiException - {\n  \"error\": {\n    \"code\": 404,\n    \"message\": \"This model models/gemini-2.0-flash is no longer available. Please update your code to use models/gemini-3.6-flash for the latest features and improvements.\",\n    \"status\": \"NOT_FOUND\"\n  }\n}\n"
+                },
+                {
+                    "index": 1,
+                    "error": true,
+                    "tags": [
+                        "error"
+                    ],
+                    "content": "litellm.NotFoundError: GeminiException - {\n  \"error\": {\n    \"code\": 404,\n    \"message\": \"This model models/gemini-2.0-flash is no longer available. Please update your code to use models/gemini-3.6-flash for the latest features and improvements.\",\n    \"status\": \"NOT_FOUND\"\n  }\n}\n"
+                }
+            ]
+        },
+        {
+            "url": "https://www.jobaaj.com/job/agilexel-pvt-ltd-ai-ml-developer-with-aws-bengaluru-bangalore-karnataka-0-to-1-years-799482",
+            "success": true,
+            "execution_time": 4.681,
+            "content_length": 12826,
+            "extracted_data": [
+                {
+                    "index": 0,
+                    "error": true,
+                    "tags": [
+                        "error"
+                    ],
+                    "content": "litellm.NotFoundError: GeminiException - {\n  \"error\": {\n    \"code\": 404,\n    \"message\": \"This model models/gemini-2.0-flash is no longer available. Please update your code to use models/gemini-3.6-flash for the latest features and improvements.\",\n    \"status\": \"NOT_FOUND\"\n  }\n}\n"
+                }
+            ]
+        },
+        {
+            "url": "https://www.foundit.in/job/python-engineer-tavant-bengaluru-bangalore-47026819",
+            "success": false,
+            "execution_time": 1.717,
+            "content_length": 253,
+            "extracted_data": [
+                {
+                    "index": 0,
+                    "error": true,
+                    "tags": [
+                        "error"
+                    ],
+                    "content": "litellm.NotFoundError: GeminiException - {\n  \"error\": {\n    \"code\": 404,\n    \"message\": \"This model models/gemini-2.0-flash is no longer available. Please update your code to use models/gemini-3.6-flash for the latest features and improvements.\",\n    \"status\": \"NOT_FOUND\"\n  }\n}\n"
+                }
+            ]
+        },
+        {
+            "url": "https://cybotrix.com/jobs/openings-for-python-developer-in-bangalore-0-to-5-year-experience.html",
+            "success": true,
+            "execution_time": 3.19,
+            "content_length": 29513,
+            "extracted_data": [
+                {
+                    "index": 0,
+                    "error": true,
+                    "tags": [
+                        "error"
+                    ],
+                    "content": "litellm.NotFoundError: GeminiException - {\n  \"error\": {\n    \"code\": 404,\n    \"message\": \"This model models/gemini-2.0-flash is no longer available. Please update your code to use models/gemini-3.6-flash for the latest features and improvements.\",\n    \"status\": \"NOT_FOUND\"\n  }\n}\n"
+                },
+                {
+                    "index": 1,
+                    "error": true,
+                    "tags": [
+                        "error"
+                    ],
+                    "content": "litellm.NotFoundError: GeminiException - {\n  \"error\": {\n    \"code\": 404,\n    \"message\": \"This model models/gemini-2.0-flash is no longer available. Please update your code to use models/gemini-3.6-flash for the latest features and improvements.\",\n    \"status\": \"NOT_FOUND\"\n  }\n}\n"
+                }
+            ]
+        },
+        {
+            "url": "https://www.naukri.com/job-listings-python-ai-ml-developer-ey-bengaluru-4-to-9-years-181225014876",
+            "success": false,
+            "execution_time": 2.15,
+            "content_length": 233,
+            "extracted_data": [
+                {
+                    "index": 0,
+                    "error": true,
+                    "tags": [
+                        "error"
+                    ],
+                    "content": "litellm.NotFoundError: GeminiException - {\n  \"error\": {\n    \"code\": 404,\n    \"message\": \"This model models/gemini-2.0-flash is no longer available. Please update your code to use models/gemini-3.6-flash for the latest features and improvements.\",\n    \"status\": \"NOT_FOUND\"\n  }\n}\n"
+                }
+            ]
+        },
+        {
+            "url": "https://in.linkedin.com/jobs/ai-and-ml-developer-jobs-bengaluru",
+            "success": true,
+            "execution_time": 4.903,
+            "content_length": 23128,
+            "extracted_data": [
+                {
+                    "index": 0,
+                    "error": true,
+                    "tags": [
+                        "error"
+                    ],
+                    "content": "litellm.NotFoundError: GeminiException - {\n  \"error\": {\n    \"code\": 404,\n    \"message\": \"This model models/gemini-2.0-flash is no longer available. Please update your code to use models/gemini-3.6-flash for the latest features and improvements.\",\n    \"status\": \"NOT_FOUND\"\n  }\n}\n"
+                }
+            ]
+        },
+        {
+            "url": "https://in.indeed.com/q-bangalore-2-years-experience-python-developer-jobs.html",
+            "success": false,
+            "execution_time": 4.062,
+            "content_length": 0,
+            "extracted_data": null
+        },
+        {
+            "url": "https://revenuefast.in/jobs/python-senior-ai-ml-bangalore",
+            "success": true,
+            "execution_time": 2.83,
+            "content_length": 6457,
+            "extracted_data": [
+                {
+                    "index": 0,
+                    "error": true,
+                    "tags": [
+                        "error"
+                    ],
+                    "content": "litellm.NotFoundError: GeminiException - {\n  \"error\": {\n    \"code\": 404,\n    \"message\": \"This model models/gemini-2.0-flash is no longer available. Please update your code to use models/gemini-3.6-flash for the latest features and improvements.\",\n    \"status\": \"NOT_FOUND\"\n  }\n}\n"
+                }
+            ]
+        },
+        {
+            "url": "https://www.naukri.com/python-developer-jobs-in-bangalore-1-to-3-years-4",
+            "success": true,
+            "execution_time": 2.021,
+            "content_length": 1,
+            "extracted_data": []
+        },
+        {
+            "url": "https://www.naukri.com/job-listings-python-developer-trainee-vectone-mobile-chennai-0-to-1-years-190126036516",
+            "success": false,
+            "execution_time": 1.523,
+            "content_length": 232,
+            "extracted_data": [
+                {
+                    "index": 0,
+                    "error": true,
+                    "tags": [
+                        "error"
+                    ],
+                    "content": "litellm.NotFoundError: GeminiException - {\n  \"error\": {\n    \"code\": 404,\n    \"message\": \"This model models/gemini-2.0-flash is no longer available. Please update your code to use models/gemini-3.6-flash for the latest features and improvements.\",\n    \"status\": \"NOT_FOUND\"\n  }\n}\n"
+                }
+            ]
+        }
+    ]
+}
