@@ -1,104 +1,152 @@
-Multi_Source_MCP_RAG_README_AutomatedShelf_Structure.md
+# **Multi-Source MCP & RAG Research Chatbot**
 
+[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge\&logo=python\&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688?style=for-the-badge\&logo=fastapi\&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Flask](https://img.shields.io/badge/Flask-3.0+-000000?style=for-the-badge\&logo=flask\&logoColor=white)](https://flask.palletsprojects.com/)
+[![LangChain](https://img.shields.io/badge/LangChain-Framework-1C3C3C?style=for-the-badge\&logo=langchain\&logoColor=white)](https://www.langchain.com/)
+[![LangGraph](https://img.shields.io/badge/LangGraph-StateGraph-FF4F00?style=for-the-badge)](https://langchain-ai.github.io/langgraph/)
+[![ChromaDB](https://img.shields.io/badge/ChromaDB-Vector_Store-FF6600?style=for-the-badge)](https://www.trychroma.com/)
+[![MCP](https://img.shields.io/badge/MCP-Protocol-5B21B6?style=for-the-badge)](https://modelcontextprotocol.io/)
 
-Multi-Source MCP & RAG Research Chatbot
+A full-stack stateful AI research assistant built with **LangGraph**, **FastAPI**, **Flask**, **ChromaDB RAG**, and **Model Context Protocol (MCP)** integration.
 
+The chatbot enables natural-language querying over local PDF documents, real-time web search, user authentication, database administration, and academic/book discovery using Google Books, Internet Archive, Crossref, and Tavily Search.
 
+---
 
+# **🌟 Key Features**
 
+## **1. Agentic LangGraph Workflow**
 
+The chatbot uses a stateful **LangGraph StateGraph** to manage multi-turn conversations.
 
+* Multi-turn stateful conversations
+* User session state persistence using `MemorySaver`
+* Tool calling and tool selection
+* Groq LLM using `openai/gpt-oss-120b`
+* Optional local Ollama support using `Llama-3.2-3B`
 
+---
 
-A full-stack stateful AI research assistant built with LangGraph, FastAPI, Flask, ChromaDB RAG, and Model Context Protocol (MCP) integration. It enables natural-language querying over local PDF documents, real-time web search, user authentication, database administration, and academic/book discovery through Google Books, Internet Archive, Crossref, and Tavily Search.
+## **2. Retrieval-Augmented Generation (RAG)**
 
-🌟 Key Features
-1. Agentic LangGraph Workflow
-The chatbot uses a stateful LangGraph StateGraph to manage multi-turn conversations.
+The RAG pipeline allows the chatbot to answer questions using uploaded PDF documents.
 
-Multi-turn stateful conversation
+The pipeline includes:
 
-User session state persistence using MemorySaver
+* PDF loading using `PyMuPDFLoader`
+* Text extraction using `fitz`
+* Text chunking using `RecursiveCharacterTextSplitter`
+* Dense embeddings using `SentenceTransformer`
+* `all-MiniLM-L6-v2` embedding model
+* Persistent vector storage using **ChromaDB**
+* Semantic similarity search
 
-Tool calling and tool selection
+---
 
-Groq LLM using openai/gpt-oss-120b
+## **3. Model Context Protocol (MCP) Integration**
 
-Optional local Ollama support using Llama-3.2-3B
+A custom **FastMCP stdio server** exposes external research tools.
 
-2. Retrieval-Augmented Generation (RAG)
-The RAG pipeline allows the chatbot to answer questions from uploaded PDF documents.
+### **Available MCP Integrations**
 
-PDF loading using PyMuPDFLoader
+* **Google Books API**
 
-Text extraction using fitz
+  * Book descriptions
+  * Publication metadata
+  * Categories
+  * Authors
 
-Text chunking using RecursiveCharacterTextSplitter
+* **Internet Archive API**
 
-Dense embeddings using SentenceTransformer
+  * Public texts
+  * Historical documents
+  * Books
+  * Archives
 
-all-MiniLM-L6-v2 embedding model
+* **Crossref API**
 
-Persistent vector storage using ChromaDB
+  * Academic paper metadata
+  * DOIs
+  * Publishers
 
-Semantic similarity search
+* **Tavily Search API**
 
-3. Model Context Protocol (MCP) Integration
-A custom FastMCP stdio server exposes external research tools.
+  * Live web search
+  * Structured search results
 
-Google Books API — book descriptions, publication metadata, categories, and authors
+---
 
-Internet Archive API — public texts, historical documents, books, and archives
+## **4. Real-Time Web Search**
 
-Crossref API — academic paper metadata, DOIs, and publishers
+The chatbot integrates `DuckDuckGoSearchRun` for live internet queries.
 
-Tavily Search API — live web search and structured results
+It can be used to retrieve information that may not be available in the local PDF knowledge base.
 
-4. Real-Time Web Search
-The chatbot integrates DuckDuckGoSearchRun for live internet queries.
+---
 
-5. Authentication & Admin Tools
+## **5. Authentication & Admin Tools**
+
 The application provides an SQLite-backed authentication system.
 
-User credential storage
+Features include:
 
-Login validation
+* User credential storage
+* Login validation
+* Flask authentication interface
+* CAPTCHA verification
+* Session tracking
+* Admin database queries
+* User account deletion
 
-Flask authentication interface
+---
 
-CAPTCHA verification
+# **🏗️ Architecture Overview**
 
-Session tracking
+```text
+┌─────────────────────────────────────────────┐
+│              Flask Web UI                  │
+│                                             │
+│     Login │ CAPTCHA │ Chat │ Sessions      │
+│              Port 5000                      │
+└──────────────────────┬──────────────────────┘
+                       │
+                       ▼
+┌─────────────────────────────────────────────┐
+│             FastAPI Backend                 │
+│                                             │
+│       /login          /chatts               │
+│              Port 8000                      │
+└──────────────────────┬──────────────────────┘
+                       │
+                       ▼
+┌─────────────────────────────────────────────┐
+│             LangGraph Agent                │
+│                                             │
+│       StateGraph + LLM + Memory            │
+└───────────────┬──────────────┬──────────────┘
+                │              │
+          ┌─────┴─────┐   ┌────┴─────┐
+          ▼           ▼   ▼          │
+        RAG       Web Search      SQLite
+          │           │             │
+          └───────────┼─────────────┘
+                      ▼
+              MCP Stdio Server
+                      │
+        ┌─────────────┼─────────────┐
+        ▼             ▼             ▼
+   Google Books  Internet Archive  Crossref
+                      │
+                      ▼
+                Tavily Search
+```
 
-Admin database queries
+---
 
-User account deletion
+# **📂 Project Structure**
 
-🏗️ Architecture Overview
-Flask Web UI
-     │
-     ▼
-FastAPI Backend
-     │
-     ▼
-LangGraph Agent
-     │
- ┌───┼───────────────┐
- ▼   ▼               ▼
-RAG Web Search   Database
- │   │               │
- └───┼───────────────┘
-     ▼
-MCP Server
- │
- ├── Google Books
- ├── Internet Archive
- ├── Crossref
- └── Tavily Search
-     │
-     ▼
-  Final Response
-📂 Project Structure
+```text
 Multi-Source-MCP-RAG-Research-Chatbot/
 │
 ├── Database.py
@@ -118,135 +166,275 @@ Multi-Source-MCP-RAG-Research-Chatbot/
     ├── login.html
     ├── home.html
     └── chat.html
-Important Files
-File	Description
-Database.py	SQLite database schema initialization
-Database.db	SQLite database for user credentials
-RAG_pipline.py	PDF loading, chunking, embeddings, and ChromaDB RAG logic
-mainfastapi.py	FastAPI server, LangGraph agent, tools, and MCP client
-mainflask.py	Flask web frontend for authentication and chat
-internet_archive_mcp.py	MCP server for Google Books, Internet Archive, Crossref, and Tavily
-insert.py	Inserts initial users into the SQLite database
-requirement.txt	Python package dependencies
-data/pdf/	Input PDF directory
-data/vector_store/	ChromaDB persistence directory
-templates/login.html	Login and CAPTCHA page
-templates/home.html	Main chatbot interface
-templates/chat.html	Chat component
-🛠️ Prerequisites
-Before installing the project, make sure the following are available:
+```
 
-Python 3.10+
+## **Important Files**
 
-Git
+| File                      | Description                                                         |
+| ------------------------- | ------------------------------------------------------------------- |
+| `Database.py`             | SQLite database schema initialization                               |
+| `Database.db`             | SQLite database for user credentials                                |
+| `RAG_pipline.py`          | PDF loading, chunking, embeddings, and ChromaDB RAG logic           |
+| `mainfastapi.py`          | FastAPI server, LangGraph agent, tools, and MCP client              |
+| `mainflask.py`            | Flask web frontend for authentication and chat                      |
+| `internet_archive_mcp.py` | MCP server for Google Books, Internet Archive, Crossref, and Tavily |
+| `insert.py`               | Inserts initial users into the SQLite database                      |
+| `requirement.txt`         | Python package dependencies                                         |
+| `data/pdf/`               | Input PDF directory                                                 |
+| `data/vector_store/`      | ChromaDB persistence directory                                      |
+| `templates/login.html`    | Login and CAPTCHA page                                              |
+| `templates/home.html`     | Main chatbot interface                                              |
+| `templates/chat.html`     | Chat component                                                      |
 
-Ollama — optional, when using the local Llama-3.2-3B model
+---
 
-Internet connection for external APIs and web-search tools
+# **🛠️ Prerequisites & Setup**
 
-📦 Installation
-Step 1: Clone the Repository
-Open a terminal and clone the project:
+Before installing the project, make sure the following are installed.
 
+### **Requirements**
+
+* **Python 3.10+**
+* **Git**
+* **Ollama** — optional if using the local `Llama-3.2-3B` model
+* Internet connection
+
+---
+
+# **📦 Installation**
+
+## **Step 1: Clone the Repository**
+
+Open a terminal and clone the repository:
+
+```bash
 git clone <YOUR_GITHUB_REPOSITORY_URL>
+```
+
 Move into the project directory:
 
+```bash
 cd Multi-Source-MCP-RAG-Research-Chatbot
-Step 2: Create a Virtual Environment
-Create a virtual environment:
+```
 
+---
+
+## **Step 2: Create a Virtual Environment**
+
+Create a Python virtual environment:
+
+```bash
 python -m venv .venv
-Step 3: Activate the Virtual Environment
-Windows PowerShell:
+```
 
+---
+
+## **Step 3: Activate the Virtual Environment**
+
+### **Windows PowerShell**
+
+```powershell
 .venv\Scripts\Activate.ps1
-Windows Command Prompt:
+```
 
+### **Windows Command Prompt**
+
+```cmd
 .venv\Scripts\activate
-Linux/macOS:
+```
 
+### **Linux / macOS**
+
+```bash
 source .venv/bin/activate
-After activation, the terminal should show:
+```
 
+After activation, the terminal should display:
+
+```text
 (.venv)
-Step 4: Install Dependencies
-Install all packages from the project's dependency file:
+```
 
+---
+
+## **Step 4: Install Dependencies**
+
+Install all required Python packages:
+
+```bash
 pip install -r requirement.txt
-Step 5: Verify Installation
-You can verify that the main packages are available:
+```
 
+To verify the installed packages:
+
+```bash
 pip list
-🔐 Environment Configuration
-Create a .env file in the project root:
+```
 
+---
+
+# **🔐 Environment Configuration**
+
+Create a `.env` file in the root directory of the project.
+
+```env
 GROQ_API_KEY=your_groq_api_key_here
 GOOGLE_BOOKS_API_KEY=your_google_books_api_key_here
 TAVILY_API_KEY=your_tavily_api_key_here
-The application uses these credentials for the corresponding external services.
+```
 
-Never upload .env, API keys, or other credentials to GitHub.
+These variables are used by the corresponding external services.
 
-Add .env to .gitignore:
+### **Protect Your Credentials**
 
+Add `.env` to `.gitignore`:
+
+```gitignore
 .env
-🗄️ Database Setup
-Initialize the SQLite database:
+```
 
+> **Never upload API keys, passwords, or `.env` files to GitHub.**
+
+---
+
+# **🗄️ Database Setup**
+
+The project uses SQLite for authentication and administration.
+
+## **Step 1: Initialize the Database**
+
+Run:
+
+```bash
 python Database.py
-Then insert the initial users:
+```
 
+## **Step 2: Insert Initial Users**
+
+Run:
+
+```bash
 python insert.py
-The supplied project documentation lists these seed credentials:
+```
 
+The supplied project documentation contains these initial credentials:
+
+```text
 admin   / admin123
 keerti  / keerti123
 aniket  / aniket123
 tushar  / tushar123
-For a real deployment, replace default credentials with secure credentials.
+```
 
-📚 RAG Document Setup
-Create or use the following directory:
+For actual deployment, replace default credentials with secure credentials.
 
+---
+
+# **📚 RAG Document Setup**
+
+Create the PDF directory:
+
+```text
 data/pdf/
-Place the PDF documents that you want the chatbot to search inside data/pdf/.
+```
+
+Place your PDF documents inside:
+
+```text
+data/pdf/
+```
+
+Then run the RAG pipeline:
+
+```bash
+python RAG_pipline.py
+```
+
+The pipeline:
+
+1. Loads the PDF documents.
+2. Extracts the text.
+3. Splits the text into chunks.
+4. Generates embeddings.
+5. Stores the embeddings in ChromaDB.
+
+The persistent vector store is created under:
+
+```text
+data/vector_store/
+```
+
+---
+
+# **🚀 Running the Application**
+
+The project contains two application servers:
+
+* **FastAPI** — backend and LangGraph agent
+* **Flask** — web interface
+
+Both need to be running.
+
+## **Step 1: Start FastAPI**
+
+Open a terminal and activate the virtual environment.
+
+Run:
+
+```bash
+uvicorn mainfastapi:app --reload --port 8000
+```
+
+FastAPI will run at:
+
+```text
+http://127.0.0.1:8000
+```
+
+API documentation:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+---
+
+## **Step 2: Start Flask**
+
+Open a **second terminal**.
+
+Activate the virtual environment again.
 
 Then run:
 
-python RAG_pipline.py
-The pipeline loads the PDFs, splits the text into chunks, generates embeddings, and stores the vectors in:
-
-data/vector_store/
-🚀 Running the Application
-The project uses two application servers: FastAPI for the backend and Flask for the web interface.
-
-Step 1: Start FastAPI
-Open a terminal with the virtual environment activated:
-
-uvicorn mainfastapi:app --reload --port 8000
-The FastAPI server runs at:
-
-http://127.0.0.1:8000
-API documentation:
-
-http://127.0.0.1:8000/docs
-Step 2: Start Flask
-Open a second terminal, activate the same virtual environment, and run:
-
+```bash
 python mainflask.py
-The Flask web interface runs at:
+```
 
+Flask will run at:
+
+```text
 http://127.0.0.1:5000
-Open the Flask URL in your browser to use the chatbot.
+```
 
-🔄 Application Workflow
+Open the following address in your browser:
+
+```text
+http://127.0.0.1:5000
+```
+
+---
+
+# **🔄 Application Workflow**
+
+```text
 User
  │
  ▼
-Flask Login / Chat UI
+Flask Web Interface
  │
  ▼
-FastAPI
+FastAPI Backend
  │
  ▼
 LangGraph Agent
@@ -264,194 +452,251 @@ LangGraph Agent
  └── Admin Request ─► SQLite
  │
  ▼
-Response
-🧰 Agent Tools Reference
-Tool Name	Source Module	Description
-document	RAG_pipline.py	Semantic search across uploaded PDF documents
-search	DuckDuckGoSearchRun	Live web search
-daatabase	mainfastapi.py	Retrieves registered usernames
-delete	mainfastapi.py	Removes a specific user
-search_books	internet_archive_mcp.py	Searches Google Books
-search_internet_archive	internet_archive_mcp.py	Searches Internet Archive
-search_crossref	internet_archive_mcp.py	Searches Crossref academic metadata
-tavily_search	internet_archive_mcp.py	Performs Tavily live search
-🔌 API Endpoints
-POST /login
+Final Response
+```
+
+---
+
+# **🧰 Agent Tools Reference**
+
+| Tool Name                 | Source Module             | Description                                            |
+| ------------------------- | ------------------------- | ------------------------------------------------------ |
+| `document`                | `RAG_pipline.py`          | Performs semantic search across uploaded PDF documents |
+| `search`                  | `DuckDuckGoSearchRun`     | Performs live web searches                             |
+| `daatabase`               | `mainfastapi.py`          | Retrieves registered usernames from SQLite             |
+| `delete`                  | `mainfastapi.py`          | Removes a specific user from SQLite                    |
+| `search_books`            | `internet_archive_mcp.py` | Searches Google Books                                  |
+| `search_internet_archive` | `internet_archive_mcp.py` | Searches Internet Archive                              |
+| `search_crossref`         | `internet_archive_mcp.py` | Searches Crossref academic metadata                    |
+| `tavily_search`           | `internet_archive_mcp.py` | Performs live Tavily search                            |
+
+---
+
+# **🔌 API Endpoints**
+
+## **`POST /login`**
+
 Authenticates a user against the SQLite database.
 
-Request:
+### **Request**
 
+```json
 {
   "username": "keerti",
   "password": "keerti123"
 }
-Response:
+```
 
+### **Response**
+
+```json
 {
   "username": "keerti"
 }
-or:
+```
 
+For invalid credentials:
+
+```json
 {
   "error": "Invalid Credentials"
 }
-POST /chatts
+```
+
+---
+
+## **`POST /chatts`**
+
 Sends a user message to the stateful LangGraph agent.
 
-Request:
+### **Request**
 
+```json
 {
   "user_name": "keerti",
   "user_in": "Summarize the key points in the uploaded document."
 }
-Response:
+```
 
+### **Response**
+
+```json
 {
   "user_input": "Summarize the key points in the uploaded document.",
   "bot_input": "Based on the uploaded documents..."
 }
-🖥️ Web Interface
-Login Page
-Provides:
+```
 
-User authentication
+---
 
-CAPTCHA verification
+# **🖥️ Web Interface**
 
-Session handling
+## **Login Page**
 
-Chat Interface
-Allows users to send natural-language questions to the LangGraph research assistant.
+The login interface provides:
 
-Depending on the question, the agent can use:
+* Username authentication
+* Password authentication
+* CAPTCHA verification
+* Session handling
 
-Uploaded PDF documents
+## **Chat Interface**
 
-Web search
+The chat interface allows users to communicate with the research assistant using natural-language queries.
 
-Google Books
+The agent can use:
 
-Internet Archive
+* Uploaded PDF documents
+* Web search
+* Google Books
+* Internet Archive
+* Crossref
+* Tavily Search
+* Database administration tools
 
-Crossref
+---
 
-Tavily
+# **🧪 Testing & Verification**
 
-Database administration tools
+The supplied project documentation does not contain a dedicated automated test script.
 
-🧪 Testing & Verification
-The supplied project README does not define a separate automated test script.
+After installation, verify the system by:
 
-After installation, verify the application by:
+1. Initializing the database.
+2. Adding at least one PDF.
+3. Running `RAG_pipline.py`.
+4. Starting FastAPI.
+5. Starting Flask.
+6. Opening the login page.
+7. Logging in with a configured account.
+8. Sending a chatbot query.
+9. Testing a PDF/RAG query.
+10. Testing an external search query.
 
-Successfully initializing the database.
+---
 
-Running the RAG pipeline with at least one PDF.
+# **🐛 Troubleshooting**
 
-Starting FastAPI without errors.
+## **Dependency Installation Error**
 
-Starting Flask without errors.
-
-Opening the login page.
-
-Logging in with a configured account.
-
-Sending a chatbot query.
-
-Testing an appropriate RAG or external-search query.
-
-🐛 Troubleshooting
-Dependency Installation Error
 Make sure the virtual environment is activated:
 
+```text
 (.venv)
-Then reinstall dependencies:
+```
 
+Then run:
+
+```bash
 pip install -r requirement.txt
-FastAPI Not Starting
-Check that the command is run from the project root:
+```
 
+## **FastAPI Not Starting**
+
+Run the command from the project root:
+
+```bash
 uvicorn mainfastapi:app --reload --port 8000
-Flask Not Starting
-Run the Flask application in a separate terminal:
+```
 
+## **Flask Not Starting**
+
+Run Flask in a separate terminal:
+
+```bash
 python mainflask.py
-RAG Returns No Results
-Verify:
+```
 
+## **RAG Returns No Results**
+
+Check that PDF files exist inside:
+
+```text
 data/pdf/
-data/vector_store/
+```
+
 Then rerun:
 
+```bash
 python RAG_pipline.py
-API Key Error
-Check the .env file:
+```
 
+Check that the vector store exists:
+
+```text
+data/vector_store/
+```
+
+## **API Key Error**
+
+Verify the `.env` file contains:
+
+```text
 GROQ_API_KEY
 GOOGLE_BOOKS_API_KEY
 TAVILY_API_KEY
-Make sure the variable names match the application configuration.
+```
 
-Ollama Model Issue
-Ollama is optional. If using the local Llama-3.2-3B model, make sure Ollama is installed and the required model is available locally.
+Make sure the variable names exactly match the application's configuration.
 
-🌟 Advantages
-Stateful multi-turn AI conversations
+## **Ollama Model Issue**
 
-Retrieval-Augmented Generation over local PDFs
+Ollama is optional. If using the local `Llama-3.2-3B` model, make sure Ollama is installed and the required model is available locally.
 
-Persistent ChromaDB vector search
+---
 
-Real-time web search
+# **🌟 Advantages**
 
-MCP-based external research tools
+* Stateful multi-turn AI conversations
+* Retrieval-Augmented Generation over local PDFs
+* Persistent ChromaDB vector search
+* Real-time web search
+* MCP-based external research tools
+* Google Books integration
+* Internet Archive integration
+* Crossref academic search
+* Tavily Search integration
+* SQLite authentication
+* CAPTCHA verification
+* Admin database tools
+* FastAPI backend
+* Flask web interface
+* Optional local Ollama support
 
-Google Books integration
+---
 
-Internet Archive integration
+# **🔮 Future Improvements**
 
-Crossref academic search
+The supplied project documentation does not define specific future improvements.
 
-Tavily search integration
+Potential future extensions can be added as the implementation evolves.
 
-SQLite authentication
+---
 
-CAPTCHA verification
+# **🤝 Contributing**
 
-Admin database tools
+1. Fork the repository.
+2. Create a feature branch.
+3. Make your changes.
+4. Test the implementation.
+5. Commit your changes.
+6. Push the branch.
+7. Create a Pull Request.
 
-FastAPI backend
+---
 
-Flask web interface
+# **📄 License**
 
-Optional local Ollama support
+This project is open-source and available under the **MIT License**.
 
-🔮 Future Improvements
-The supplied project documentation does not define specific future improvements. Potential extensions should be documented separately when they become part of the implementation.
+---
 
-🤝 Contributing
-Contributions can be managed through the standard Git workflow:
+# **⭐ Support**
 
-Fork the repository.
-
-Create a feature branch.
-
-Make your changes.
-
-Test the changes.
-
-Commit the changes.
-
-Push the branch.
-
-Create a Pull Request.
-
-📄 License
-This project is open-source and available under the MIT License.
-
-⭐ Support
 If you find this project useful, consider giving the repository a ⭐ on GitHub.
 
 <p align="center">
 
 ⭐ <strong>Multi-Source MCP & RAG Research Chatbot</strong>
+
+</p>
