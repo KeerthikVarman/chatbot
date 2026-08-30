@@ -6,61 +6,7 @@ A full-stack stateful AI research assistant built with **LangGraph, FastAPI, Fla
 
 </p>
 
-<p align="center">
-
-[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge\&logo=python\&logoColor=white)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688?style=for-the-badge\&logo=fastapi\&logoColor=white)](https://fastapi.tiangolo.com/)
-[![Flask](https://img.shields.io/badge/Flask-3.0+-000000?style=for-the-badge\&logo=flask\&logoColor=white)](https://flask.palletsprojects.com/)
-[![LangChain](https://img.shields.io/badge/LangChain-Framework-1C3C3C?style=for-the-badge\&logo=langchain\&logoColor=white)](https://www.langchain.com/)
-[![LangGraph](https://img.shields.io/badge/LangGraph-StateGraph-FF4F00?style=for-the-badge)](https://langchain-ai.github.io/langgraph/)
-[![ChromaDB](https://img.shields.io/badge/ChromaDB-Vector_Store-FF6600?style=for-the-badge)](https://www.trychroma.com/)
-[![MCP](https://img.shields.io/badge/MCP-Protocol-5B21B6?style=for-the-badge)](https://modelcontextprotocol.io/)
-
-</p>
-
----
-
-## 📸 Project Screenshots
-
-### Login Page
-
-<p align="center">
-  <img src="assets/login.png" alt="Login Page" width="850">
-</p>
-
-### Chat Interface
-
-<p align="center">
-  <img src="assets/chat.png" alt="Chat Interface" width="850">
-</p>
-
-> **GitHub image setup:** create an `assets` folder in your repository and place `login.png` and `chat.png` inside it.
-
-```text
-Multi-Source-MCP-RAG-Research-Chatbot/
-│
-├── assets/
-│   ├── login.png
-│   └── chat.png
-│
-├── data/
-├── templates/
-├── Database.py
-├── Database.db
-├── RAG_pipline.py
-├── mainfastapi.py
-├── mainflask.py
-├── internet_archive_mcp.py
-├── insert.py
-├── requirement.txt
-├── .env
-├── .gitignore
-└── README.md
-```
-
----
-
-## 🌟 Key Features
+##  Key Features
 
 ### 1. Agentic LangGraph Workflow
 
@@ -166,7 +112,7 @@ The application follows this architecture:
 
 ---
 
-# 📂 Project Structure
+#  Project Structure
 
 ```text
 Multi-Source-MCP-RAG-Research-Chatbot/
@@ -232,7 +178,7 @@ If using Groq instead of Ollama, a Groq API key is also required.
 
 ---
 
-# 📦 Installation
+# Installation
 
 ## 1. Clone the Repository
 
@@ -275,7 +221,7 @@ pip install -r requirement.txt
 
 ---
 
-# 🦙 Ollama Setup
+# Ollama Setup
 
 The project can optionally use a local Ollama model instead of a cloud LLM.
 
@@ -321,7 +267,7 @@ If Ollama responds successfully, the local model is working.
 
 ---
 
-# 🔗 Connect Ollama with LangChain
+#  Connect Ollama with LangChain
 
 Install the integration:
 
@@ -361,7 +307,7 @@ llama3.2:3b
 
 ---
 
-# ⚙️ LLM Configuration
+#  LLM Configuration
 
 The project supports Groq and Ollama.
 
@@ -398,7 +344,7 @@ llm = ChatOllama(
 
 ---
 
-# 🔐 Environment Configuration
+# Environment Configuration
 
 Create a `.env` file in the project root:
 
@@ -426,7 +372,7 @@ data/vector_store/
 
 ---
 
-# 🗄️ Database Setup
+#  Database Setup
 
 Initialize the SQLite database:
 
@@ -444,7 +390,7 @@ python insert.py
 
 ---
 
-# 📚 RAG Document Setup
+#  RAG Document Setup
 
 Create the PDF directory:
 
@@ -489,7 +435,7 @@ data/vector_store/
 
 ---
 
-# 🚀 Running the Application
+#  Running the Application
 
 The project uses two application servers:
 
@@ -540,7 +486,7 @@ Open the Flask address in your browser.
 
 ---
 
-# 🔄 Application Workflow
+# Application Workflow
 
 ```text
 User
@@ -574,7 +520,7 @@ Final Response
 
 ---
 
-# 🧰 Agent Tools
+#  Agent Tools
 
 | Tool Name                 | Source Module             | Description                                            |
 | ------------------------- | ------------------------- | ------------------------------------------------------ |
@@ -589,7 +535,7 @@ Final Response
 
 ---
 
-# 🔌 API Endpoints
+#  API Endpoints
 
 ## `POST /login`
 
@@ -638,7 +584,7 @@ Sends a user message to the stateful LangGraph agent.
 
 ---
 
-# 🖥️ Web Interface
+# Web Interface
 
 ## Login Page
 
@@ -664,7 +610,7 @@ The chatbot can work with:
 
 ---
 
-# 🧪 Testing & Verification
+# Testing & Verification
 
 After installation, verify the system in this order:
 
@@ -686,7 +632,7 @@ After installation, verify the system in this order:
 
 ---
 
-# 🐛 Troubleshooting
+#  Troubleshooting
 
 ## Dependency Installation Error
 
@@ -788,7 +734,7 @@ TAVILY_API_KEY
 
 ---
 
-# 🌟 Advantages
+# Advantages
 
 * Stateful multi-turn AI conversations
 * Retrieval-Augmented Generation over local PDFs
@@ -809,7 +755,7 @@ TAVILY_API_KEY
 
 ---
 
-# 🤝 Contributing
+# Contributing
 
 1. Fork the repository.
 2. Create a feature branch.
@@ -821,13 +767,7 @@ TAVILY_API_KEY
 
 ---
 
-# 📄 License
-
-This project is open-source and available under the **MIT License**.
-
----
-
-# ⭐ Support
+# Support
 
 If you find this project useful, consider giving the repository a ⭐ on GitHub.
 
