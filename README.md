@@ -57,11 +57,7 @@ The chatbot integrates `DuckDuckGoSearchRun` for live internet queries.
 
 ---
 
-# 🏗️ Architecture
-
-<p align="center">
-  <img src="assets/architecture.png" alt="System Architecture" width="900">
-</p>
+# Architecture
 
 The application follows this architecture:
 
@@ -165,7 +161,7 @@ Multi-Source-MCP-RAG-Research-Chatbot/
 
 ---
 
-# 🛠️ Prerequisites
+#  Prerequisites
 
 Before installing the project, make sure the following are installed:
 
